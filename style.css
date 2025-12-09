@@ -1,0 +1,107 @@
+/* Font */
+body {
+    font-family: 'Inter', sans-serif;
+    overflow: auto;
+}
+
+/* Forest background using YOUR image */
+.forest-bg {
+    position: fixed;
+    inset: 0;
+    background: url('Forest.jpg') center/cover no-repeat;
+    filter: brightness(0.45) blur(2px);
+    z-index: -2;
+}
+
+/* Particles container */
+#particles {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+}
+
+/* Glass card effect */
+.glass-card {
+    position: relative;
+    z-index: 20;
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(18px);
+    border-radius: 24px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55);
+    animation: fadeIn 0.8s ease;
+}
+
+/* Input styling with glowing border */
+.frosted-input {
+    width: 100%;
+    padding: 14px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.18);
+    border: 2px solid transparent;
+    color: #fff;
+    outline: none;
+    transition: 0.25s;
+}
+
+.frosted-input::placeholder {
+    color: #d1d5db;
+}
+
+.frosted-input:hover,
+.frosted-input:focus {
+    border-color: #7f9cff;
+    box-shadow: 0 0 15px rgba(129, 140, 248, 0.7);
+}
+
+/* Login/Register Button (glowing) */
+.login-btn {
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    border-radius: 12px;
+    box-shadow: 0 0 25px rgba(99, 102, 241, 0.65);
+    transition: 0.25s;
+}
+
+.login-btn:hover {
+    box-shadow: 0 0 35px rgba(129, 140, 248, 0.9);
+    transform: translateY(-2px);
+}
+
+/* Shake animation */
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-8px); }
+    40% { transform: translateX(8px); }
+    60% { transform: translateX(-6px); }
+    80% { transform: translateX(6px); }
+}
+
+.shake {
+    animation: shake 0.4s ease;
+}
+
+/* Fade-in animation for the card */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(15px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.toggle-password {
+    cursor: pointer;
+    background: none;
+    border: none;
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #1f2933;  
+    font-size: 1.2rem;
+    padding: 0;
+    z-index: 5;
+}
+
+.toggle-password:hover {
+    color: #4f46e5;  
+}
+

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forest Login Page</title>
+
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome (EYE ICONS) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <!-- External CSS -->
+    <link rel="stylesheet" href="style.css">
+
+    <!-- JS -->
+    <script src="script.js" defer></script>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <div id="particles"></div>
+    <div class="forest-bg"></div>
+
+    <header class="w-full p-6 flex justify-between items-center relative z-10">
+        <div class="text-white text-2xl font-bold tracking-tight">Logo</div>
+        <a href="index.html">
+            <button class="bg-white text-gray-900 px-6 py-2 rounded font-semibold hover:bg-gray-100 transition shadow-sm">
+                Login
+            </button>
+        </a>
+    </header>
+
+    <main class="flex-grow flex items-center justify-center p-4 relative z-10">
+        <div id="login-card" class="glass-card w-full max-w-md p-10">
+
+            <h1 class="text-3xl font-bold text-center text-white mb-8 drop-shadow-md">Login</h1>
+
+            <form id="loginForm" class="space-y-6">
+                
+                <div class="space-y-2">
+                    <label class="block text-sm font-semibold text-gray-200">Email</label>
+                    <input type="email" id="email" placeholder="name@example.com" class="frosted-input" required>
+                </div>
+
+                <div class="relative space-y-2">
+                    <label class="block text-sm font-semibold text-gray-200">Password</label>
+                    <input type="password" id="password" placeholder="••••••••" class="frosted-input pr-10" required>
+
+                    <button type="button" class="toggle-password absolute right-3 top-1/2 -translate-y-1/2">
+                        <i class="fa-solid fa-eye"></i>
+                    </button>
+                </div>
+
+                <button type="submit" class="login-btn w-full text-white font-bold rounded-lg text-lg px-5 py-3">
+                    Login
+                </button>
+
+                <div class="text-sm font-medium text-gray-300 text-center pt-2">
+                    Don't have an account? 
+                    <a href="register.html" class="text-indigo-300 hover:underline font-bold">Register here</a>
+                </div>
+            </form>
+        </div>
+    </main>
+
+</body>
+</html>
