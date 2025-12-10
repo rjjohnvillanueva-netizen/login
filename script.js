@@ -51,26 +51,37 @@ document.querySelectorAll('.toggle-password').forEach(button => {
 const accounts = JSON.parse(localStorage.getItem('accounts')) || [];
 
 // ================= LOGIN =================
-document.getElementById('loginForm')?.addEventListener('submit', function(e) {
-    e.preventDefault();
+document.addEventListener("DOMContentLoaded", () => {
+    const form = document.getElementById('loginForm');
 
-    const email = document.getElementById('email').value.trim();
-    const pass = document.getElementById('password').value.trim();
-    const card = document.getElementById('login-card');
-
-    const account = accounts.find(acc => acc.email === email && acc.password === pass);
-
-    if (!account) {
-        alert("Invalid login!");
-        card.classList.add('shake');
-        setTimeout(() => card.classList.remove('shake'), 500);
+    if (!form) {
+        console.error("loginForm not found");
         return;
     }
 
-    // SAVE LOGIN SESSION
-    localStorage.setItem("loggedIn", "true");
-    localStorage.setItem("currentUser", account.name);
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
 
-    // REDIRECT TO PORTFOLIO
-    window.location.href = "https://rjjohnvillanueva-netizen.github.io/login_portfolio/";
+        const email = document.getElementById('email').value.trim();
+        const pass = document.getElementById('password').value.trim();
+        const card = document.getElementById('login-card');
+
+        const account = accounts.find(acc => acc.email === email && acc.password === pass);
+
+        if (!account) {
+            alert("Invalid login!");
+            card.classList.add('shake');
+            setTimeout(() => card.classList.remove('shake'), 500);
+            return;
+        }
+
+        // SAVE LOGIN SESSION
+        localStorage.setItem("loggedIn", "true");
+        localStorage.setItem("currentUser", account.name);
+
+        console.log("Login submitted"); // DEBUG
+
+        // REDIRECT TO PORTFOLIO
+        window.location.href = "https://rjjohnvillanueva-netizen.github.io/login_portfolio/";
+    });
 });
