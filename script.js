@@ -79,7 +79,7 @@ document.getElementById('loginForm')?.addEventListener('submit', function(e) {
     alert(`Welcome ${account.name}`);
 
     // ✅ REDIRECT TO PORTFOLIO
-    window.location.href = "../HTML/index.html"; 
+    window.location.href = "https://rjjohnvillanueva-netizen.github.io/login_portfolio/"; 
 });
 
 
@@ -109,6 +109,6 @@ document.getElementById('registerForm')?.addEventListener('submit', function(e) 
 
     alert(`Account created for ${name}`);
 
-    // ✅ REDIRECT TO PORTFOLIO
-    window.location.href = "../HTML/index.html"; 
+    // ✅ REDIRECT TO PORTFOLIO AFTER LOGIN
+    window.location.href = "https://rjjohnvillanueva-netizen.github.io/login_portfolio/";
 });
