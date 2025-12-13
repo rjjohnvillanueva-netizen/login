@@ -1,196 +1,95 @@
-// script.js (updated to redirect to your portfolio after demo save)
-// Safe behavior:
-// - Does NOT POST to your portfolio URL (that would 405).
-// - Uses demo saving (only name & email) and then redirects to the provided portfolio URL.
-// - If you later provide a real API endpoint, set CONFIG.apiEndpoint to that URL.
-
-(function () {
+// Short, safe script for register.html
+(function(){
   'use strict';
-
   if (window.__registerScriptInitialized) return;
   window.__registerScriptInitialized = true;
 
   const CONFIG = {
-    apiEndpoint: '', // leave empty for demo/local behavior
-    demoSaveToLocalStorage: true,
+    apiEndpoint: '', // set if you have a real API
     demoStorageKey: 'demo_users',
-    // Redirect target after successful demo/save. (You provided this public page.)
     redirectOnSuccess: 'https://rjjohnvillanueva-netizen.github.io/login_portfolio/'
   };
 
-  document.addEventListener('DOMContentLoaded', function () {
-    try {
-      const form = document.getElementById('registerForm');
-      if (!form) return;
+  document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('registerForm');
+    if (!form) return;
 
-      const passwordInput = document.getElementById('password');
-      const confirmInput = document.getElementById('confirm-password');
-      let errBox = document.getElementById('password-error');
+    const pw = document.getElementById('password');
+    const pw2 = document.getElementById('confirm-password');
 
-      if (!errBox) {
-        const submitBtn = form.querySelector('button[type="submit"]') || form.lastElementChild;
-        errBox = document.createElement('div');
-        errBox.id = 'password-error';
-        errBox.setAttribute('role', 'alert');
-        errBox.setAttribute('aria-live', 'polite');
-        errBox.className = 'text-sm text-red-300 hidden';
-        if (submitBtn && submitBtn.parentNode) {
-          submitBtn.parentNode.insertBefore(errBox, submitBtn);
-        } else {
-          form.appendChild(errBox);
-        }
+    const err = (() => {
+      let e = document.getElementById('password-error');
+      if (!e) {
+        e = document.createElement('div');
+        e.id = 'password-error';
+        e.className = 'text-sm text-red-300 hidden';
+        const submit = form.querySelector('button[type="submit"]') || form.lastElementChild;
+        (submit && submit.parentNode ? submit.parentNode : form).insertBefore(e, submit);
+      }
+      return e;
+    })();
+
+    function show(msg){ err.textContent = msg; err.classList.remove('hidden'); }
+    function hide(){ err.textContent = ''; err.classList.add('hidden'); }
+
+    // toggle buttons (idempotent)
+    document.querySelectorAll('.toggle-password').forEach(btn => {
+      if (btn.dataset.init) return; btn.dataset.init = '1';
+      const target = btn.getAttribute('data-target') ? document.querySelector(btn.getAttribute('data-target')) : btn.previousElementSibling;
+      if (!target) return;
+      const icon = btn.querySelector('i');
+      function setIcon(shown){ btn.setAttribute('aria-pressed', String(!!shown)); if (icon) { icon.classList.toggle('fa-eye', !shown); icon.classList.toggle('fa-eye-slash', shown); } }
+      setIcon(false);
+      btn.addEventListener('click', e => { e.preventDefault(); const showing = target.type !== 'password'; target.type = showing ? 'password' : 'text'; setIcon(!showing); target.focus(); });
+    });
+
+    function isPostingToSelf(f){
+      const method = (f.getAttribute('method')||'get').toLowerCase();
+      const action = (f.getAttribute('action')||'').trim();
+      if (method !== 'post') return false;
+      if (!action || action === '#') return true;
+      try {
+        const a = new URL(action, location.href), c = new URL(location.href);
+        return a.origin === c.origin && a.pathname === c.pathname;
+      } catch { return true; }
+    }
+
+    async function demoSave(fd){
+      // save only name/email for demo (never store passwords)
+      const name = fd.get('name')||'', email = fd.get('email')||'';
+      const key = CONFIG.demoStorageKey;
+      const arr = JSON.parse(localStorage.getItem(key)||'[]');
+      arr.push({name,email,createdAt:new Date().toISOString()});
+      localStorage.setItem(key, JSON.stringify(arr));
+      return { ok:true };
+    }
+
+    form.addEventListener('submit', async e => {
+      hide();
+      if (pw && pw2) {
+        if (pw.value !== pw2.value) { e.preventDefault(); show('Passwords do not match.'); pw2.focus(); return false; }
+        const min = parseInt(pw.getAttribute('minlength')||'0',10);
+        if (min>0 && pw.value.length<min) { e.preventDefault(); show(`Password must be ≥ ${min} chars.`); pw.focus(); return false; }
       }
 
-      function showError(msg) {
-        errBox.textContent = msg;
-        errBox.classList.remove('hidden');
-      }
-      function hideError() {
-        errBox.textContent = '';
-        errBox.classList.add('hidden');
-      }
-
-      // Toggle wiring (safe, idempotent)
-      const toggleButtons = Array.from(document.querySelectorAll('.toggle-password'));
-      toggleButtons.forEach(btn => {
-        if (btn.dataset.pwToggleInit === '1') return;
-        btn.dataset.pwToggleInit = '1';
-        const targetSelector = btn.getAttribute('data-target');
-        const input = targetSelector ? document.querySelector(targetSelector) : btn.previousElementSibling;
-        if (!input || input.tagName !== 'INPUT') return;
-
-        function updateIcon(isShown) {
-          btn.setAttribute('aria-pressed', String(!!isShown));
-          const icon = btn.querySelector('i');
-          if (icon && icon.classList) {
-            icon.classList.toggle('fa-eye', !isShown);
-            icon.classList.toggle('fa-eye-slash', isShown);
-          } else {
-            btn.textContent = isShown ? 'Hide' : 'Show';
-          }
-        }
-        updateIcon(false);
-        btn.addEventListener('click', function (ev) {
-          ev.preventDefault();
+      if (isPostingToSelf(form)) {
+        e.preventDefault();
+        const fd = new FormData(form);
+        if (CONFIG.apiEndpoint) {
           try {
-            const currentlyPassword = input.getAttribute('type') === 'password';
-            input.setAttribute('type', currentlyPassword ? 'text' : 'password');
-            updateIcon(currentlyPassword);
-            input.focus();
-          } catch (_) {}
-        });
-      });
-
-      function isPostingToSelf(formEl) {
-        const method = (formEl.getAttribute('method') || 'get').toLowerCase();
-        const action = (formEl.getAttribute('action') || '').trim();
-        if (method !== 'post') return false;
-        if (!action || action === '#') return true;
-        try {
-          const actionUrl = new URL(action, window.location.href);
-          const currentUrl = new URL(window.location.href);
-          return actionUrl.origin === currentUrl.origin && actionUrl.pathname === currentUrl.pathname;
-        } catch (_) {
-          return true;
+            const res = await fetch(CONFIG.apiEndpoint, { method:'POST', body: fd });
+            if (!res.ok) { show('Submission failed.'); return false; }
+            if (CONFIG.redirectOnSuccess) location.href = CONFIG.redirectOnSuccess; else form.reset();
+            return true;
+          } catch { show('Network error.'); return false; }
+        } else {
+          const r = await demoSave(fd);
+          if (r.ok) { if (CONFIG.redirectOnSuccess) location.href = CONFIG.redirectOnSuccess; else { alert('Saved (demo).'); form.reset(); } return true; }
+          show('Demo save failed.');
+          return false;
         }
       }
-
-      async function demoHandleSubmit(formData) {
-        if (!CONFIG.demoSaveToLocalStorage) return { ok: true, message: 'Demo ignored.' };
-        const name = formData.get('name') || '';
-        const email = formData.get('email') || '';
-        const key = CONFIG.demoStorageKey;
-        const existing = JSON.parse(localStorage.getItem(key) || '[]');
-        existing.push({ name, email, createdAt: new Date().toISOString() });
-        localStorage.setItem(key, JSON.stringify(existing));
-        return { ok: true, message: 'Saved to local demo storage.' };
-      }
-
-      form.addEventListener('submit', async function (ev) {
-        hideError();
-
-        if (passwordInput && confirmInput) {
-          if (passwordInput.value !== confirmInput.value) {
-            ev.preventDefault();
-            showError('Passwords do not match. Please check and try again.');
-            try { confirmInput.focus(); } catch (_) {}
-            return false;
-          }
-          const minLen = parseInt(passwordInput.getAttribute('minlength') || '0', 10);
-          if (minLen > 0 && passwordInput.value.length < minLen) {
-            ev.preventDefault();
-            showError(`Password must be at least ${minLen} characters.`);
-            try { passwordInput.focus(); } catch (_) {}
-            return false;
-          }
-        }
-
-        // If this would POST to the same page, prevent and handle via JS (avoids 405)
-        if (isPostingToSelf(form)) {
-          ev.preventDefault();
-          const formData = new FormData(form);
-
-          if (CONFIG.apiEndpoint) {
-            // If you later set apiEndpoint, this will POST there.
-            try {
-              const resp = await fetch(CONFIG.apiEndpoint, {
-                method: 'POST',
-                body: formData,
-                // If your API expects JSON, update this section to send JSON instead.
-              });
-              if (!resp.ok) {
-                const text = await resp.text().catch(()=>null);
-                showError('Submission failed: ' + (text || resp.statusText));
-                return false;
-              }
-              // Successful server response -> redirect if configured
-              if (CONFIG.redirectOnSuccess) window.location.href = CONFIG.redirectOnSuccess;
-              else form.reset();
-              return true;
-            } catch (err) {
-              showError('Network error when sending data.');
-              return false;
-            }
-          } else {
-            // Demo local save (safe): only saves name & email, never passwords.
-            const result = await demoHandleSubmit(formData);
-            if (result.ok) {
-              // redirect to your portfolio URL (demo flow)
-              if (CONFIG.redirectOnSuccess) {
-                window.location.href = CONFIG.redirectOnSuccess;
-                return true;
-              } else {
-                alert('Demo registration saved locally.');
-                form.reset();
-                return true;
-              }
-            } else {
-              showError(result.message || 'Demo save failed');
-              return false;
-            }
-          }
-        }
-
-        // Not posting to self: allow default submit (e.g., if action is a real endpoint)
-        return true;
-      });
-
-      [passwordInput, confirmInput].forEach(el => {
-        if (!el) return;
-        el.addEventListener('input', function () {
-          if (!errBox.classList.contains('hidden') && passwordInput && confirmInput && passwordInput.value === confirmInput.value) {
-            hideError();
-          }
-        });
-      });
-
-    } catch (e) {
-      // Fail silently so other page scripts aren't affected.
-    }
-  });
-})();
-      // Fail silently so we do not break other scripts
-      // console.warn('register script error', e);
-    }
+      return true; // allow normal submit if not posting to self
+    });
   });
 })();
