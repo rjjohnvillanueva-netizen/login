@@ -47,26 +47,26 @@ document.querySelectorAll('.toggle-password').forEach(button => {
     });
 });
 
-// ================= LOCAL STORAGE =================
-const accounts = JSON.parse(localStorage.getItem('accounts')) || [];
-
 // ================= LOGIN =================
 document.addEventListener("DOMContentLoaded", () => {
-    const form = document.getElementById('loginForm');
 
-    if (!form) {
-        console.error("loginForm not found");
-        return;
-    }
+    const loginForm = document.getElementById('loginForm');
 
-    form.addEventListener('submit', function(e) {
+    // STOP if this is NOT the login page
+    if (!loginForm) return;
+
+    loginForm.addEventListener('submit', function (e) {
         e.preventDefault();
 
         const email = document.getElementById('email').value.trim();
         const pass = document.getElementById('password').value.trim();
         const card = document.getElementById('login-card');
 
-        const account = accounts.find(acc => acc.email === email && acc.password === pass);
+        const accounts = JSON.parse(localStorage.getItem('accounts')) || [];
+
+        const account = accounts.find(
+            acc => acc.email === email && acc.password === pass
+        );
 
         if (!account) {
             alert("Invalid login!");
@@ -75,13 +75,12 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        // SAVE LOGIN SESSION
+        // SAVE SESSION
         localStorage.setItem("loggedIn", "true");
         localStorage.setItem("currentUser", account.name);
 
-        console.log("Login submitted"); // DEBUG
-
-        // REDIRECT TO PORTFOLIO
-        window.location.href = "https://rjjohnvillanueva-netizen.github.io/login_portfolio/";
+        // REDIRECT
+        window.location.href =
+            "https://rjjohnvillanueva-netizen.github.io/login_portfolio/";
     });
 });
