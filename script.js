@@ -1,134 +1,145 @@
-// ================= PARTICLES, EYE TOGGLE & LOGIN =================
-// All DOM-dependent code runs after DOMContentLoaded to avoid
-// timing issues when script is placed in <head> or loaded async.
+(function () {
+  'use strict';
 
-document.addEventListener("DOMContentLoaded", () => {
-    // ================= PARTICLES =================
-    const particleContainer = document.getElementById('particles');
-    if (particleContainer) {
-        // inject particle styles
-        const style = document.createElement("style");
-        style.innerHTML = `
-.particle {
-    position: fixed;
-    top: 0;
-    width: 4px;
-    height: 4px;
-    background: white;
-    border-radius: 50%;
-    box-shadow: 0 0 6px white;
-    animation: fall linear forwards;
-    pointer-events: none;
-}
-@keyframes fall {
-    from { transform: translateY(-10px); }
-    to { transform: translateY(110vh); }
-}
-`;
-        document.head.appendChild(style);
+  // Guard to avoid double initialization
+  if (window.__registerScriptInitialized) return;
+  window.__registerScriptInitialized = true;
 
-        function createParticle() {
-            const p = document.createElement("div");
-            p.classList.add("particle");
-            p.style.left = Math.random() * window.innerWidth + "px";
+  document.addEventListener('DOMContentLoaded', function () {
+    try {
+      // Find the register form; if absent, do nothing (safe for other pages)
+      const form = document.getElementById('registerForm');
+      if (!form) return;
 
-            // animation duration between 3s and 8s
-            const durationSec = 3 + Math.random() * 5;
-            p.style.animationDuration = durationSec.toFixed(3) + "s";
+      // Elements we expect to work with
+      const passwordInput = document.getElementById('password');
+      const confirmInput = document.getElementById('confirm-password');
 
-            // random opacity but keep visible
-            p.style.opacity = (0.3 + Math.random() * 0.7).toString();
+      // Ensure we have at least the two inputs. If not, still try to wire toggles if present.
+      // Setup or locate the error box for password mismatch messages.
+      let errBox = document.getElementById('password-error');
+      if (!errBox) {
+        // Create one in a non-invasive place (before the submit button) so layout remains predictable
+        const submitBtn = form.querySelector('button[type="submit"]') || form.lastElementChild;
+        errBox = document.createElement('div');
+        errBox.id = 'password-error';
+        errBox.setAttribute('role', 'alert');
+        errBox.setAttribute('aria-live', 'polite');
+        errBox.className = 'text-sm text-red-300 hidden';
+        if (submitBtn && submitBtn.parentNode) {
+          submitBtn.parentNode.insertBefore(errBox, submitBtn);
+        } else {
+          form.appendChild(errBox);
+        }
+      }
 
-            particleContainer.appendChild(p);
+      function showError(msg) {
+        if (!errBox) return;
+        errBox.textContent = msg;
+        errBox.classList.remove('hidden');
+      }
+      function hideError() {
+        if (!errBox) return;
+        errBox.textContent = '';
+        errBox.classList.add('hidden');
+      }
 
-            // remove after the animation finishes (with small buffer)
-            const removeAfter = Math.ceil(durationSec * 1000) + 1000;
-            setTimeout(() => p.remove(), removeAfter);
+      // Password visibility toggles (per-button, per-target)
+      const toggleButtons = Array.from(document.querySelectorAll('.toggle-password'));
+      toggleButtons.forEach(btn => {
+        // Avoid re-initializing the same button
+        if (btn.dataset.pwToggleInit === '1') return;
+        btn.dataset.pwToggleInit = '1';
+
+        // Find the target input via data-target attribute, or fallback to previousElementSibling
+        const targetSelector = btn.getAttribute('data-target');
+        const input = targetSelector ? document.querySelector(targetSelector) : btn.previousElementSibling;
+
+        // If target isn't an <input>, don't attach anything
+        if (!input || input.tagName !== 'INPUT') {
+          return;
         }
 
-        // Only create particles while there's a container
-        const particleInterval = setInterval(() => {
-            if (!document.body.contains(particleContainer)) {
-                clearInterval(particleInterval);
-                return;
-            }
-            createParticle();
-        }, 150);
-    }
+        // Setup a small helper to update icon/text. Non-destructive: if no icon is found we just update aria-pressed.
+        function updateIcon(isShown) {
+          btn.setAttribute('aria-pressed', String(!!isShown));
+          const icon = btn.querySelector('i');
+          if (icon && icon.classList) {
+            // Use Font Awesome classes if present
+            icon.classList.toggle('fa-eye', !isShown);
+            icon.classList.toggle('fa-eye-slash', isShown);
+          } else {
+            // Fallback text (keeps it accessible)
+            btn.textContent = isShown ? 'Hide' : 'Show';
+          }
+        }
 
-    // ================= EYE TOGGLE =================
-    // Safer lookup: find the related input inside the same parent container
-    document.querySelectorAll('.toggle-password').forEach(button => {
-        button.addEventListener('click', () => {
-            // look for an input (password or text) in the same parent node
-            const parent = button.parentElement || document;
-            const input = parent.querySelector('input[type="password"], input[type="text"]');
-            const icon = button.querySelector('i');
+        // Initialize icon state to hidden (password not shown)
+        updateIcon(false);
 
-            if (!input) return;
-
-            if (input.type === 'password') {
-                input.type = 'text';
-                if (icon) {
-                    icon.classList.remove('fa-eye');
-                    icon.classList.add('fa-eye-slash');
-                }
-            } else {
-                input.type = 'password';
-                if (icon) {
-                    icon.classList.remove('fa-eye-slash');
-                    icon.classList.add('fa-eye');
-                }
-            }
+        // Add the click listener
+        btn.addEventListener('click', function (ev) {
+          ev.preventDefault();
+          // Toggle the type safely (only 'password' <-> 'text')
+          try {
+            const currentlyPassword = input.getAttribute('type') === 'password';
+            input.setAttribute('type', currentlyPassword ? 'text' : 'password');
+            updateIcon(currentlyPassword);
+            // Keep focus on the input for keyboard users
+            input.focus();
+          } catch (err) {
+            // If anything unexpected happens, fail silently so we don't break the page
+            // (no-op)
+          }
         });
-    });
+      });
 
-    // ================= LOGIN =================
-    const loginForm = document.getElementById('loginForm');
-
-    // STOP if this is NOT the login page
-    if (!loginForm) return;
-
-    loginForm.addEventListener('submit', function (e) {
-        e.preventDefault();
-
-        const emailEl = document.getElementById('email');
-        const passEl = document.getElementById('password');
-        const card = document.getElementById('login-card');
-
-        const email = emailEl ? emailEl.value.trim() : '';
-        const pass = passEl ? passEl.value.trim() : '';
-
-        let accounts = [];
-        try {
-            accounts = JSON.parse(localStorage.getItem('accounts')) || [];
-            if (!Array.isArray(accounts)) accounts = [];
-        } catch (err) {
-            // malformed data in localStorage
-            console.warn('Failed to parse accounts from localStorage:', err);
-            accounts = [];
+      // Form submit validation: check passwords match. Don't override other submit handlers.
+      form.addEventListener('submit', function (ev) {
+        // Only validate if both inputs exist; otherwise, allow submission to proceed
+        if (!passwordInput || !confirmInput) {
+          hideError();
+          return;
         }
 
-        const account = accounts.find(
-            acc => acc && acc.email === email && acc.password === pass
-        );
-
-        if (!account) {
-            alert("Invalid login!");
-            if (card) {
-                card.classList.add('shake');
-                setTimeout(() => card.classList.remove('shake'), 500);
-            }
-            return;
+        hideError();
+        // Basic check: equality and non-empty
+        if (passwordInput.value !== confirmInput.value) {
+          ev.preventDefault();
+          showError('Passwords do not match. Please check and try again.');
+          // Focus the confirm field to help the user fix the issue
+          try { confirmInput.focus(); } catch (e) {}
+          return false;
         }
 
-        // SAVE SESSION (simple client-side session)
-        localStorage.setItem("loggedIn", "true");
-        // prefer name when available, fallback to email
-        localStorage.setItem("currentUser", account.name || account.email || '');
+        // Optionally, enforce minimum length client-side (mirrors HTML minlength but is helpful)
+        const minLen = parseInt(passwordInput.getAttribute('minlength') || '0', 10);
+        if (minLen > 0 && passwordInput.value.length < minLen) {
+          ev.preventDefault();
+          showError(`Password must be at least ${minLen} characters.`);
+          try { passwordInput.focus(); } catch (e) {}
+          return false;
+        }
 
-        // REDIRECT to the portfolio / dashboard
-        window.location.href =
-            "https://rjjohnvillanueva-netizen.github.io/login_portfolio/";
-    });
-});
+        // If validation passes, hide error and allow other submit handlers (and default submit) to run.
+        hideError();
+        return true;
+      });
+
+      // Clear error as user types so they get real-time feedback
+      [passwordInput, confirmInput].forEach(el => {
+        if (!el) return;
+        el.addEventListener('input', function () {
+          if (!errBox.classList.contains('hidden') && passwordInput && confirmInput && passwordInput.value === confirmInput.value) {
+            hideError();
+          }
+        });
+      });
+    } catch (e) {
+      // Defensive: Never throw from this script. If something goes wrong, fail silently.
+      // This prevents this script from breaking other page scripts.
+      // Optionally you can uncomment the next line during development:
+      // console.warn('register script error:', e);
+    }
+  });
+})();
