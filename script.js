@@ -1,4 +1,4 @@
-// Short safe script for register.html — prevents real POST (avoids 405)
+// Short safe script for register.html and login.html — prevents real POST (avoids 405)
 (function(){
   'use strict';
   if (window.__registerScriptInitialized) return;
@@ -10,27 +10,10 @@
   };
 
   document.addEventListener('DOMContentLoaded', () => {
-    const form = document.getElementById('registerForm');
-    if (!form) return;
+    const regForm = document.getElementById('registerForm');
+    const loginForm = document.getElementById('loginForm');
 
-    const nameEl = document.getElementById('name');
-    const emailEl = document.getElementById('email');
-    const pw = document.getElementById('password');
-    const pw2 = document.getElementById('confirm-password');
-    const btn = document.getElementById('registerBtn');
-
-    let err = document.getElementById('password-error');
-    if (!err) {
-      err = document.createElement('div');
-      err.id = 'password-error';
-      err.className = 'text-sm text-red-300 hidden';
-      const submit = form.querySelector('button[type="submit"]') || btn;
-      (submit && submit.parentNode ? submit.parentNode : form).insertBefore(err, submit);
-    }
-    const show = m => { err.textContent = m; err.classList.remove('hidden'); };
-    const hide = () => { err.textContent = ''; err.classList.add('hidden'); };
-
-    // toggle password buttons
+    // password toggle works on either page — run regardless
     document.querySelectorAll('.toggle-password').forEach(b => {
       if (b.dataset.init) return; b.dataset.init = '1';
       const target = b.getAttribute('data-target') ? document.querySelector(b.getAttribute('data-target')) : b.previousElementSibling;
@@ -41,31 +24,81 @@
       b.addEventListener('click', e => { e.preventDefault(); const showing = target.type !== 'password'; target.type = showing ? 'password' : 'text'; set(!showing); target.focus(); });
     });
 
-    // demo save (only name & email)
-    const demoSave = fd => {
+    // demo save (never store passwords)
+    const demoSave = (fd, type = 'register') => {
       const arr = JSON.parse(localStorage.getItem(CONFIG.demoStorageKey) || '[]');
-      arr.push({ name: fd.get('name')||'', email: fd.get('email')||'', createdAt: new Date().toISOString() });
+      const entry = {
+        type,
+        email: fd.get('email') || '',
+        name: fd.get('name') || '',
+        createdAt: new Date().toISOString()
+      };
+      arr.push(entry);
       localStorage.setItem(CONFIG.demoStorageKey, JSON.stringify(arr));
       return true;
     };
 
-    // handle click instead of real submit
-    if (btn) {
-      btn.addEventListener('click', () => {
-        hide();
-        if (pw && pw2) {
-          if (pw.value !== pw2.value) { show('Passwords do not match.'); pw2.focus(); return; }
-          const min = parseInt(pw.getAttribute('minlength')||'0',10);
-          if (min>0 && pw.value.length < min) { show(`Password must be ≥ ${min} chars.`); pw.focus(); return; }
-        }
+    // Helper to redirect or show saved message
+    const handleSuccess = (form) => {
+      if (CONFIG.redirectOnSuccess) {
+        location.href = CONFIG.redirectOnSuccess;
+      } else {
+        alert('Saved (demo).');
+        form.reset();
+      }
+    };
 
-        // collect form data
-        const fd = new FormData(form);
-        // demo save (never store passwords)
-        demoSave(fd);
-        // redirect to portfolio
-        if (CONFIG.redirectOnSuccess) location.href = CONFIG.redirectOnSuccess;
-        else { alert('Saved (demo).'); form.reset(); }
+    // If register form exists, keep existing register behavior
+    if (regForm) {
+      const nameEl = document.getElementById('name');
+      const emailEl = document.getElementById('email');
+      const pw = document.getElementById('password');
+      const pw2 = document.getElementById('confirm-password');
+      const btn = document.getElementById('registerBtn');
+
+      let err = document.getElementById('password-error');
+      if (!err) {
+        err = document.createElement('div');
+        err.id = 'password-error';
+        err.className = 'text-sm text-red-300 hidden';
+        const submit = regForm.querySelector('button[type="submit"]') || btn;
+        (submit && submit.parentNode ? submit.parentNode : regForm).insertBefore(err, submit);
+      }
+      const show = m => { err.textContent = m; err.classList.remove('hidden'); };
+      const hide = () => { err.textContent = ''; err.classList.add('hidden'); };
+
+      if (btn) {
+        btn.addEventListener('click', () => {
+          hide();
+          if (pw && pw2) {
+            if (pw.value !== pw2.value) { show('Passwords do not match.'); pw2.focus(); return; }
+            const min = parseInt(pw.getAttribute('minlength')||'0',10);
+            if (min>0 && pw.value.length < min) { show(`Password must be ≥ ${min} chars.`); pw.focus(); return; }
+          }
+
+          // collect form data
+          const fd = new FormData(regForm);
+          // demo save (never store passwords)
+          demoSave(fd, 'register');
+          // redirect to portfolio
+          handleSuccess(regForm);
+        });
+      }
+    }
+
+    // If login form exists, attach submit handler to demo-redirect (no real auth)
+    if (loginForm) {
+      loginForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        // optional: basic validation
+        const email = loginForm.querySelector('#email');
+        const pw = loginForm.querySelector('#password');
+        if (email && !email.value) { email.focus(); return; }
+        if (pw && !pw.value) { pw.focus(); return; }
+
+        const fd = new FormData(loginForm);
+        demoSave(fd, 'login');
+        handleSuccess(loginForm);
       });
     }
   });
