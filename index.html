@@ -38,13 +38,15 @@
                 
                 <div class="space-y-2">
                     <label class="block text-sm font-semibold text-gray-200">Email</label>
-                    <input type="email" id="email" placeholder="name@example.com" class="frosted-input" required>
+                    <!-- add name and autocomplete -->
+                    <input type="email" id="email" name="email" autocomplete="username" placeholder="name@example.com" class="frosted-input" required>
                 </div>
 
                 <div class="relative space-y-2">
                     <label class="block text-sm font-semibold text-gray-200">Password</label>
-                    <input type="password" id="password" placeholder="••••••••" class="frosted-input pr-10" required>
-                    <button type="button" class="toggle-password absolute right-3 top-1/2 -translate-y-1/2">
+                    <!-- add name and autocomplete -->
+                    <input type="password" id="password" name="password" autocomplete="current-password" placeholder="••••••••" class="frosted-input pr-10" required>
+                    <button type="button" class="toggle-password absolute right-3 top-1/2 -translate-y-1/2" aria-label="Show or hide password">
                         <i class="fa-solid fa-eye"></i>
                     </button>
                 </div>
