@@ -17,6 +17,13 @@
 <!-- External CSS -->
 <link rel="stylesheet" href="style.css">
 
+<!-- Auto-redirect if already logged in -->
+<script>
+  if (localStorage.getItem('loggedIn')) {
+    window.location.href = 'https://rjjohnvillanueva-netizen.github.io/login_portfolio/';
+  }
+</script>
+
 <!-- JS -->
 <script src="script.js" defer></script>
 </head>
@@ -45,7 +52,6 @@
                     <label class="block text-sm font-semibold text-gray-200">Password</label>
                     <input type="password" id="password" name="password" autocomplete="current-password" placeholder="••••••••" class="frosted-input pr-10" required>
 
-                    <!-- ✅ FIX ADDED HERE -->
                     <button type="button"
                             class="toggle-password absolute right-3 top-1/2 -translate-y-1/2"
                             aria-label="Show or hide password"
@@ -68,4 +74,3 @@
 
 </body>
 </html>
-
