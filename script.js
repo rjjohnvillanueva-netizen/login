@@ -9,6 +9,12 @@
     demoStorageKey: 'demo_users'
   };
 
+  // ======= Auto redirect if already "logged in" =======
+  const loggedIn = localStorage.getItem('loggedIn');
+  if (loggedIn && window.location.pathname.includes('index.html')) {
+    window.location.href = CONFIG.redirectOnSuccess;
+  }
+
   document.addEventListener('DOMContentLoaded', () => {
     const regForm = document.getElementById('registerForm');
     const loginForm = document.getElementById('loginForm');
@@ -98,6 +104,10 @@
 
         const fd = new FormData(loginForm);
         demoSave(fd, 'login');
+
+        // ======= Mark user as logged in =======
+        localStorage.setItem('loggedIn', 'true');
+
         handleSuccess(loginForm);
       });
     }
