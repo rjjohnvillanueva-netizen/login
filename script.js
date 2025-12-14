@@ -9,12 +9,6 @@
     demoStorageKey: 'demo_users'
   };
 
-  // ======= Auto redirect if already "logged in" =======
-  const loggedIn = localStorage.getItem('loggedIn');
-  if (loggedIn && window.location.pathname.includes('index.html')) {
-    window.location.href = CONFIG.redirectOnSuccess;
-  }
-
   document.addEventListener('DOMContentLoaded', () => {
     const regForm = document.getElementById('registerForm');
     const loginForm = document.getElementById('loginForm');
@@ -47,17 +41,15 @@
     // Helper to redirect or show saved message
     const handleSuccess = (form) => {
       if (CONFIG.redirectOnSuccess) {
-        location.href = CONFIG.redirectOnSuccess;
+        window.location.href = CONFIG.redirectOnSuccess;
       } else {
         alert('Saved (demo).');
         form.reset();
       }
     };
 
-    // If register form exists, keep existing register behavior
+    // REGISTER FORM
     if (regForm) {
-      const nameEl = document.getElementById('name');
-      const emailEl = document.getElementById('email');
       const pw = document.getElementById('password');
       const pw2 = document.getElementById('confirm-password');
       const btn = document.getElementById('registerBtn');
@@ -82,21 +74,17 @@
             if (min>0 && pw.value.length < min) { show(`Password must be ≥ ${min} chars.`); pw.focus(); return; }
           }
 
-          // collect form data
           const fd = new FormData(regForm);
-          // demo save (never store passwords)
           demoSave(fd, 'register');
-          // redirect to portfolio
           handleSuccess(regForm);
         });
       }
     }
 
-    // If login form exists, attach submit handler to demo-redirect (no real auth)
+    // LOGIN FORM
     if (loginForm) {
       loginForm.addEventListener('submit', (e) => {
         e.preventDefault();
-        // optional: basic validation
         const email = loginForm.querySelector('#email');
         const pw = loginForm.querySelector('#password');
         if (email && !email.value) { email.focus(); return; }
@@ -105,10 +93,11 @@
         const fd = new FormData(loginForm);
         demoSave(fd, 'login');
 
-        // ======= Mark user as logged in =======
+        // ✅ Mark user as logged in
         localStorage.setItem('loggedIn', 'true');
 
-        handleSuccess(loginForm);
+        // ✅ Redirect immediately
+        window.location.href = CONFIG.redirectOnSuccess;
       });
     }
   });
